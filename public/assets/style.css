@@ -1,0 +1,22 @@
+#tsck-booking-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+#tsck-booking-form label {
+    display: block;
+    margin-bottom: 10px;
+}
+#tsck-booking-form input,
+#tsck-booking-form select,
+#tsck-booking-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+}
+#tsck-booking-form button {
+    padding: 10px 20px;
+    background: #0073aa;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}

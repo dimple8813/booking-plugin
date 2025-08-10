@@ -1,0 +1,62 @@
+#tsck-calendar-container {
+    margin-bottom: 30px;
+    max-width: 600px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.calendar-header button {
+    padding: 4px 10px;
+    font-size: 16px;
+}
+
+.weekday-labels, .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    gap: 4px;
+}
+
+.weekday-labels div {
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
+    padding: 4px 0;
+}
+
+.calendar-grid .day {
+    padding: 8px 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.calendar-grid .booked {
+    background-color: #28a745;
+    color: white;
+}
+
+.calendar-grid .not-booked {
+    background-color: #ffc107;
+    color: black;
+}
+
+.calendar-grid .blank {
+    background-color: transparent;
+}
+
+.weekday-toggle {
+    margin-top: 15px;
+}
+
+.weekday-toggle button {
+    margin: 0 2px;
+}
+
+.buttons {
+    margin-top: 15px;
+}

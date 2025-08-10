@@ -127,6 +127,7 @@ jQuery(function ($) {
 
 const allowedDates = tsckBookingData.event_dates || [];
 const bookedDates = tsckBookingData.booked_dates || [];
+const ppDates = tsckBookingData.ppevent_date || [];
 
 $('#event_date').datepicker({
     dateFormat: 'yy-mm-dd',
@@ -135,10 +136,15 @@ $('#event_date').datepicker({
 
         const isAllowed = allowedDates.includes(formatted);
         const isBooked = bookedDates.includes(formatted);
+        const PPisBooked = ppDates.includes(formatted);
 
         if (isBooked) {
             // Booked date → disabled (red)
             return [false, 'booked-date', 'Already Booked'];
+        }
+         if (PPisBooked) {
+            // Booked date → disabled (red)
+            return [false, 'ppevent_date', 'Already Booked'];
         }
 
         if (isAllowed) {
@@ -396,5 +402,9 @@ a.ui-state-default {
 }
 td.ui-datepicker-unselectable.ui-state-disabled.booked-date {
     background: red;
+}
+td.ui-datepicker-unselectable.ui-state-disabled.ppevent_date {
+    border: 1px solid yellow !important;
+    background: yellow;
 }
 </style>

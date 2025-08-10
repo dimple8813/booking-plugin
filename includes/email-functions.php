@@ -2,7 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 function tsck_send_booking_email($data) {
-    print_r($data); die;
+ 
     $admin_email = get_option('admin_email');
     $subject = "New Booking from " . $data['organization_name'];
     $body = "<h2>New Bus Booking</h2>";

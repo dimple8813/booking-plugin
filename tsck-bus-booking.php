@@ -25,6 +25,7 @@ add_action('wp_enqueue_scripts', function () {
 
     $event_table = $wpdb->prefix . 'tsck_events';
     $results = $wpdb->get_col("SELECT event_date FROM $event_table WHERE status = 'active'");
+    $pendingResults = $wpdb->get_col("SELECT event_date FROM $event_table WHERE status = 'inactive'");
 
     $submissionstable = $wpdb->prefix . 'tsck_form_submissions';
 
@@ -40,7 +41,9 @@ add_action('wp_enqueue_scripts', function () {
         }
     }
 
-
+   $ppevent_date = array_map(function ($date) {
+        return date('Y-m-d', strtotime($date));
+    }, $pendingResults);
 
     $event_dates = array_map(function ($date) {
         return date('Y-m-d', strtotime($date));
@@ -53,6 +56,7 @@ add_action('wp_enqueue_scripts', function () {
     wp_localize_script('tsck-booking-datepicker', 'tsckBookingData', [
         'event_dates' => $event_dates,
         'booked_dates' => $booked_dates,
+        "ppevent_date" => $ppevent_date,
     ]);
 
     wp_enqueue_style('tsck-style', plugin_dir_url(__FILE__) . 'public/assets/style.css');

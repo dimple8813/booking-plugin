@@ -1,22 +1,49 @@
-#tsck-booking-form {
-    max-width: 600px;
-    margin: 0 auto;
+.booking-form {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
 }
-#tsck-booking-form label {
+@media (min-width: 575px){
+    .booking-form { 
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 20px;
+    }
+}
+.booking-form label {
     display: block;
-    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--base-color);
 }
-#tsck-booking-form input,
-#tsck-booking-form select,
-#tsck-booking-form textarea {
+.booking-form select.form-control {
+    background-image: url(images/icon-down.svg);
+    background-position: right 15px center;
+    background-repeat: no-repeat;
+    -webkit-appearance: none;
+    background-size: 15px;
+}
+.booking-form .form-control {
     width: 100%;
-    padding: 8px;
-    margin-top: 4px;
+    font-size: 16px;
+    min-height: 44px;
+    padding: 7px 15px;
+    border-radius: 4px;
+    color: var(--base-color);
+    border: 1px solid rgba(0,0,0,.25);
 }
-#tsck-booking-form button {
-    padding: 10px 20px;
-    background: #0073aa;
-    color: #fff;
-    border: none;
-    cursor: pointer;
+.booking-form textarea.form-control {
+    min-height: 150px;
+}
+.radio-group input[type=radio]{
+    margin-left: 0;
+}
+.btn-group {
+  grid-column: 1 / -1; /* span from first to last column */
+  width: 100%;
+}
+.booking-form .btn {
+    margin: 0 auto;
+    display: block;
 }

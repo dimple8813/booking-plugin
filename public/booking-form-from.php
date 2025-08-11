@@ -41,7 +41,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
 ?>
 
 <?php if ($fields): ?>
-    <form id="tsck-dynamic-booking-form" method="post" style="max-width: 600px;" novalidate>
+    <form id="tsck-dynamic-booking-form" class="booking-form" method="post" novalidate>
         <?php wp_nonce_field('tsck_form_submit', 'tsck_form_nonce'); ?>
         <input type="hidden" name="lang" value="<?php echo esc_attr($selected_lang); ?>">
 
@@ -54,8 +54,8 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
             $value       = $field->value;
             $valueAR     = $field->valueAR;
         ?>
-            <div class="tsck-form-group" style="margin-bottom: 20px;">
-                <label for="<?php echo $name; ?>"><?php echo $label; ?></label><br>
+            <div class="group-form">
+                <label for="<?php echo $name; ?>"><?php echo $label; ?></label>
 
                 <?php
                 switch ($type) {
@@ -63,7 +63,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
                         $options = explode(',', $value);       // English values
                         $options_ar = explode(',', $valueAR);  // Arabic values
 
-                        echo "<select name='$name' id='$name' $is_required>";
+                        echo "<select name='$name' id='$name' $is_required class='form-control'>";
 
                         // Static first option with blank value
                         $placeholder = $selected_lang === 'ar' ? 'اختر خيار' : 'Select option';
@@ -87,7 +87,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
                             $option = trim($option);
                             $option_ar = isset($options_ar[$i]) ? trim($options_ar[$i]) : '';
                             $option_label = $selected_lang === 'ar' ? $option_ar : $option;
-                            echo "<div><label><input type='radio' name='$name' value='" . esc_attr($option) . "' $is_required> " . esc_html($option_label) . "</label></div>";
+                            echo "<div class='radio-group'><input type='radio' name='$name' value='" . esc_attr($option) . "' $is_required> " . esc_html($option_label) . "</div>";
                         }
                         break;
 
@@ -98,32 +98,33 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
                             $option = trim($option);
                             $option_ar = isset($options_ar[$i]) ? trim($options_ar[$i]) : '';
                             $option_label = $selected_lang === 'ar' ? $option_ar : $option;
-                            echo "<div><label><input type='checkbox' name='{$name}[]' value='" . esc_attr($option) . "' $is_required> " . esc_html($option_label) . "</label></div>";
+                            echo "<div class='radio-group'><input type='checkbox' name='{$name}[]' value='" . esc_attr($option) . "' $is_required> " . esc_html($option_label) . "</div>";
                         }
                         break;
 
                     case 'textarea':
-                        echo "<textarea name='$name' id='$name' placeholder='$placeholder' style='width: 100%;' $is_required></textarea>";
+                        echo "<textarea name='$name' id='$name' placeholder='$placeholder' class='form-control' $is_required></textarea>";
                         break;
 
                     default:
                     if($name === 'booking_date') {
-                        echo "<input  type='$type' id='event_date' name='$name' id='$name' placeholder='$placeholder' style='width: 100%;' $is_required>";
+                        echo "<input type='$type' id='event_date' name='$name' id='$name' placeholder='$placeholder'  class='form-control' $is_required>";
                     }else{
-                        echo "<input type='$type' name='$name' id='$name'  style='width: 100%;' $is_required>";
+                        echo "<input type='$type' name='$name' id='$name' class='form-control' $is_required>";
                 }
-                        break;
+                    break;
                 }
-                ?>
-            </div>
+            ?>
+        </div>
         <?php endforeach; ?>
 
         <div id="custom-recaptcha" style="margin-bottom: 15px;">
-    <label id="captcha-question"></label><br>
-    <input type="text" id="captcha-input" placeholder="Enter answer" required style="width:100%;">
-</div>
-        
-        <button id="submit-btn" type="submit"><?php echo esc_html__('Submit', 'tsck'); ?></button>
+            <label id="captcha-question"></label><br>
+            <input type="text" id="captcha-input" placeholder="Enter answer" required style="width:100%;">
+        </div>
+        <div class="btn-group">
+            <button id="submit-btn" class="btn btn-md btn-primary" type="submit"><?php echo esc_html__('Submit', 'tsck'); ?></button>
+        </div>
     </form>
 <?php else: ?>
     <p><?php echo esc_html__('No form fields configured.', 'tsck'); ?></p>

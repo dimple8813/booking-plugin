@@ -1,3 +1,10 @@
+:root {
+    --white-color: #ffffff;
+    --black-color: #000000;
+    --base-color: #525252;
+    --primary-color: #4471b7;
+    --secondary-color: #109fda;
+}
 .booking-form {
     max-width: 100%;
     display: grid;
@@ -46,4 +53,31 @@
 .booking-form .btn {
     margin: 0 auto;
     display: block;
+}
+.booking-form .btn {
+    margin: 0 auto;
+    display: block;
+}
+.btn-md {
+    font-size: 1rem;
+    padding: 11px 20px;
+    min-height: 48px;
+    min-width: 140px;
+}
+.btn {
+    min-width: 120px;
+    cursor: pointer;
+}
+.btn-primary {
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: var(--white-color);
+    display: inline-block;
+    padding: 13px 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 16px;
+    border: 0px;
+    line-height: 1.5;
+    transition: all .5s ease-in-out;
 }

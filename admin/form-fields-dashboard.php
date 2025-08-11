@@ -1,42 +1,59 @@
 <?php
-
-
 function tsck_render_fields_admin() {
     global $wpdb;
     $table = $wpdb->prefix . 'tsck_form_fields';
+
+    // Ensure the new column exists
+    $columns = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'field_show_customer'");
+    if (empty($columns)) {
+        $wpdb->query("ALTER TABLE $table ADD field_show_customer TINYINT(1) NOT NULL DEFAULT 0");
+    }
 
     $editing_id = isset($_GET['edit']) ? intval($_GET['edit']) : 0;
     $editing_field = $editing_id ? $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $editing_id)) : null;
 
     // Add Field
     if (isset($_POST['tsck_add_field'])) {
+        $placeholder = sanitize_text_field($_POST['placeholder']);
+        if (isset($_POST['field_show_customer']) && $_POST['field_show_customer'] == 1) {
+            $placeholder = '1';
+        }
+
         $wpdb->insert($table, [
-            'label'       => sanitize_text_field($_POST['label']),
-            'nameAR'      => sanitize_text_field($_POST['nameAR']),
-            'name'        => sanitize_text_field($_POST['name']),
-            'type'        => sanitize_text_field($_POST['type']),
-            'value'       => sanitize_text_field($_POST['value']),
-            'valueAR'     => sanitize_text_field($_POST['valueAR']),
-            'placeholder' => sanitize_text_field($_POST['placeholder']),
-            'required'    => isset($_POST['required']) ? 1 : 0,
-            'position'    => intval($_POST['position']),
+            'label'               => sanitize_text_field($_POST['label']),
+            'nameAR'              => sanitize_text_field($_POST['nameAR']),
+            'name'                => sanitize_text_field($_POST['name']),
+            'type'                => sanitize_text_field($_POST['type']),
+            'value'               => sanitize_text_field($_POST['value']),
+            'valueAR'              => sanitize_text_field($_POST['valueAR']),
+            'placeholder'         => $placeholder,
+            'required'            => isset($_POST['required']) ? 1 : 0,
+            'field_show_customer' => isset($_POST['field_show_customer']) ? 1 : 0,
+            'position'            => intval($_POST['position']),
         ]);
     }
 
     // Update Field
     if (isset($_POST['tsck_update_field'])) {
+        $placeholder = sanitize_text_field($_POST['placeholder']);
+        if (isset($_POST['field_show_customer']) && $_POST['field_show_customer'] == 1) {
+            $placeholder = '1';
+        }
+
         $wpdb->update($table, [
-            'label'       => sanitize_text_field($_POST['label']),
-            'nameAR'      => sanitize_text_field($_POST['nameAR']),
-            'name'        => sanitize_text_field($_POST['name']),
-            'type'        => sanitize_text_field($_POST['type']),
-            'value'       => sanitize_text_field($_POST['value']),
-            'valueAR'     => sanitize_text_field($_POST['valueAR']),
-            'placeholder' => sanitize_text_field($_POST['placeholder']),
-            'required'    => isset($_POST['required']) ? 1 : 0,
-            'position'    => intval($_POST['position']),
+            'label'               => sanitize_text_field($_POST['label']),
+            'nameAR'              => sanitize_text_field($_POST['nameAR']),
+            'name'                => sanitize_text_field($_POST['name']),
+            'type'                => sanitize_text_field($_POST['type']),
+            'value'               => sanitize_text_field($_POST['value']),
+            'valueAR'              => sanitize_text_field($_POST['valueAR']),
+            'placeholder'         => $placeholder,
+            'required'            => isset($_POST['required']) ? 1 : 0,
+            'field_show_customer' => isset($_POST['field_show_customer']) ? 1 : 0,
+            'position'            => intval($_POST['position']),
         ], ['id' => intval($_POST['field_id'])]);
-        $editing_id = 0; // Reset edit mode
+
+        $editing_id = 0;
         $editing_field = null;
         echo '<div class="updated"><p>Field updated successfully.</p></div>';
     }
@@ -73,7 +90,7 @@ function tsck_render_fields_admin() {
 
             <input name="value" placeholder="Value(s) EN" value="<?php echo esc_attr($editing_field->value ?? ''); ?>">
             <input name="valueAR" placeholder="Value(s) AR" value="<?php echo esc_attr($editing_field->valueAR ?? ''); ?>">
-            <input name="placeholder" placeholder="Placeholder" value="<?php echo esc_attr($editing_field->placeholder ?? ''); ?>">
+            <input type="hidden" name="placeholder" placeholder="Placeholder" value="<?php echo esc_attr($editing_field->placeholder ?? ''); ?>">
             <input name="position" type="number" placeholder="Position" value="<?php echo esc_attr($editing_field->position ?? 0); ?>" min="0">
 
             <label>
@@ -81,6 +98,12 @@ function tsck_render_fields_admin() {
                 <?php esc_html_e('Required', 'tsck'); ?>
             </label>
 
+            <label>
+                <input type="checkbox" name="field_show_customer" <?php checked($editing_field && $editing_field->field_show_customer); ?>>
+                <?php esc_html_e('Hide to Customer', 'tsck'); ?>
+            </label>
+
+            <br><br>
             <button type="submit" name="<?php echo $editing_field ? 'tsck_update_field' : 'tsck_add_field'; ?>" class="button button-primary">
                 <?php echo $editing_field ? esc_html__('Update Field', 'tsck') : esc_html__('Add Field', 'tsck'); ?>
             </button>
@@ -101,6 +124,7 @@ function tsck_render_fields_admin() {
                     <th><?php esc_html_e('Type', 'tsck'); ?></th>
                     <th><?php esc_html_e('Name', 'tsck'); ?></th>
                     <th><?php esc_html_e('Required', 'tsck'); ?></th>
+                    <th><?php esc_html_e('Show to Customer', 'tsck'); ?></th>
                     <th><?php esc_html_e('Actions', 'tsck'); ?></th>
                 </tr>
             </thead>
@@ -112,6 +136,7 @@ function tsck_render_fields_admin() {
                         <td><?php echo esc_html($field->type); ?></td>
                         <td><?php echo esc_html($field->name); ?></td>
                         <td><?php echo $field->required ? 'Yes' : 'No'; ?></td>
+                        <td><?php echo $field->field_show_customer ? 'Yes' : 'No'; ?></td>
                         <td>
                             <a href="<?php echo admin_url('admin.php?page=tsck_form_fields&edit=' . $field->id); ?>" class="button">Edit</a>
                             <form method="post" style="display:inline;">
@@ -128,4 +153,3 @@ function tsck_render_fields_admin() {
     </div>
     <?php
 }
-

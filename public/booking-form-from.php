@@ -12,7 +12,7 @@ $selected_lang = 'en';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tsck_form_nonce']) && wp_verify_nonce($_POST['tsck_form_nonce'], 'tsck_form_submit')) {
     $form_data = [];
 
-    $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
+    $fields = $wpdb->get_results("SELECT * FROM $table WHERE `fiield_show_customer`= 1 ORDER BY position ASC;");
     foreach ($fields as $field) {
         $name = $field->name;
         $type = $field->type;
@@ -59,18 +59,26 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
 
                 <?php
                 switch ($type) {
-                    case 'select':
-                        $options = explode(',', $value);
-                        $options_ar = explode(',', $valueAR);
+                 case 'select':
+                        $options = explode(',', $value);       // English values
+                        $options_ar = explode(',', $valueAR);  // Arabic values
+
                         echo "<select name='$name' id='$name' $is_required>";
+
+                        // Static first option with blank value
+                        $placeholder = $selected_lang === 'ar' ? 'اختر خيار' : 'Select option';
+                        echo "<option value=''>" . esc_html($placeholder) . "</option>";
+
                         foreach ($options as $i => $option) {
                             $option = trim($option);
                             $option_ar = isset($options_ar[$i]) ? trim($options_ar[$i]) : '';
                             $option_label = $selected_lang === 'ar' ? $option_ar : $option;
                             echo "<option value='" . esc_attr($option) . "'>" . esc_html($option_label) . "</option>";
                         }
+
                         echo "</select>";
                         break;
+
 
                     case 'radio':
                         $options = explode(',', $value);
@@ -102,7 +110,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
                     if($name === 'booking_date') {
                         echo "<input  type='$type' id='event_date' name='$name' id='$name' placeholder='$placeholder' style='width: 100%;' $is_required>";
                     }else{
-                        echo "<input type='$type' name='$name' id='$name' placeholder='$placeholder' style='width: 100%;' $is_required>";
+                        echo "<input type='$type' name='$name' id='$name'  style='width: 100%;' $is_required>";
                 }
                         break;
                 }
@@ -123,7 +131,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
 
 <script>
 jQuery(function ($) {
- console.log("TSCK Booking Data:", tsckBookingData);
+
 
 const allowedDates = tsckBookingData.event_dates || [];
 const bookedDates = tsckBookingData.booked_dates || [];
@@ -406,5 +414,5 @@ td.ui-datepicker-unselectable.ui-state-disabled.booked-date {
 td.ui-datepicker-unselectable.ui-state-disabled.ppevent_date {
     border: 1px solid yellow !important;
     background: yellow;
-}
+}gi
 </style>

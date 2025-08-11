@@ -2,7 +2,7 @@
 /*
 Plugin Name: TSCK Bus Booking
 Description: Booking system for schools and companies.
-Version: 1.0
+Version: 10.14.1
 Author: Your Name
 */
 
@@ -108,7 +108,30 @@ function tsck_check_recent_submission() {
 
     wp_send_json(['exists' => $count > 0]);
 }
+// Disable update notice for TSCK Bus Booking plugin
+// Disable update checks for TSCK Bus Booking
+add_filter('site_transient_update_plugins', function($value) {
+    if (isset($value->response)) {
+        foreach ($value->response as $plugin_file => $update_data) {
+            if (strpos($plugin_file, 'tsck-bus-booking') !== false) {
+                unset($value->response[$plugin_file]);
+            }
+        }
+    }
+    return $value;
+});
 
+// Also block API calls for plugin updates
+add_filter('pre_set_site_transient_update_plugins', function($value) {
+    if (isset($value->response)) {
+        foreach ($value->response as $plugin_file => $update_data) {
+            if (strpos($plugin_file, 'tsck-bus-booking') !== false) {
+                unset($value->response[$plugin_file]);
+            }
+        }
+    }
+    return $value;
+});
 // Plugin activation: create DB tables
 register_activation_hook(__FILE__, function () {
     global $wpdb;
@@ -141,6 +164,7 @@ register_activation_hook(__FILE__, function () {
         valueAR TEXT,
         placeholder VARCHAR(255),
         required BOOLEAN DEFAULT FALSE,
+        field_show_customer TINYINT(1) NOT NULL DEFAULT 0,
         position INT DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY(id)

@@ -175,7 +175,7 @@ register_activation_hook(__FILE__, function () {
     $sql4 = "CREATE TABLE $table_sub (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     form_data LONGTEXT NOT NULL,
-    twiel_language TINYINT(1) NOT NULL DEFAULT 0,
+    twiel_language TEXT,
     email_status TINYINT(1) NOT NULL DEFAULT 0,
     submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) $charset_collate;";

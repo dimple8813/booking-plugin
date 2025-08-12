@@ -54,14 +54,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tsck_form_nonce']) &&
         if ($already > 0) {
             echo '<p style="color:red;">' . esc_html($msg_duplicate) . '</p>';
         } else {
-            // Insert into DB
-            $wpdb->insert($submission_table, [
+            
+          $data =   $wpdb->insert($submission_table, [
                 'form_data'      => wp_json_encode($form_data),
                 'twiel_language' => $selected_lang,
                 'submitted_at'   => current_time('mysql'),
             ]);
 
-            tsck_send_booking_email($form_data, $selected_lang);
+           
+                $inserted_id = $wpdb->insert_id;
+                if($inserted_id) {
+                    //tsck_send_booking_email($form_data, $selected_lang,$inserted_id);
+                    
+                
+                }
+
+
+            
             echo '<p style="color: green;">' . esc_html($msg_success) . '</p>';
         }
     } else {
@@ -76,7 +85,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
 <?php if ($fields): ?>
     <form id="tsck-dynamic-booking-form" class="booking-form" method="post" novalidate>
         <?php wp_nonce_field('tsck_form_submit', 'tsck_form_nonce'); ?>
-        <input type="hidden" name="lang" value="<?php echo esc_attr($selected_lang); ?>">
+     
 
         <?php foreach ($fields as $field):
             $is_required = $field->required ? 'required' : '';
@@ -366,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 phoneInput.classList.add('error-field');
                 showPhoneError(msgInvalid);
             } else {
-                   alert(1);
+                
                 phoneInput.classList.remove('error-field');
                 phoneInput.value = prefix + num; // store full number
             }

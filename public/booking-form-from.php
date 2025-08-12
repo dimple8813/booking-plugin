@@ -1,6 +1,6 @@
 <?php
 // This file handles both displaying and processing the dynamic form
-
+$current_lang = apply_filters( 'wpml_current_language', null );
 global $wpdb;
 $table = $wpdb->prefix . 'tsck_form_fields';
 $submission_table = $wpdb->prefix . 'tsck_form_submissions';
@@ -8,11 +8,14 @@ $submission_table = $wpdb->prefix . 'tsck_form_submissions';
 // Set language (can be dynamic via query param in future)
 $selected_lang = 'en';
 
+
+      
+// Handle form submission
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tsck_form_nonce']) && wp_verify_nonce($_POST['tsck_form_nonce'], 'tsck_form_submit')) {
     $form_data = [];
 
-    $fields = $wpdb->get_results("SELECT * FROM $table WHERE `fiield_show_customer`= 1 ORDER BY position ASC;");
+    $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC;");
     foreach ($fields as $field) {
         $name = $field->name;
         $type = $field->type;
@@ -24,16 +27,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tsck_form_nonce']) &&
         }
     }
 
-    // Save to database
-    $wpdb->insert($submission_table, [
-        'form_data'    => wp_json_encode($form_data),
-        'language'    => $selected_lang,
-        'submitted_at' => current_time('mysql'),
-    ]);
+    // Get email from form
+    $email = isset($form_data['email']) ? sanitize_email($form_data['email']) : '';
 
-    //tsck_send_booking_email($form_data,$selected_lang);
+    // Messages based on language
+    $msg_duplicate = ($selected_lang === 'ar')
+        ? 'لقد قمت بالفعل بإرسال هذا النموذج من قبل.'
+        : 'You have already submitted this form.';
+    $msg_success = ($selected_lang === 'ar')
+        ? 'تم إرسال النموذج بنجاح!'
+        : 'Form submitted successfully!';
+    $msg_email_required = ($selected_lang === 'ar')
+        ? 'البريد الإلكتروني مطلوب.'
+        : 'Email is required.';
 
-    echo '<p style="color: green;">Form submitted successfully!</p>';
+    if (!empty($email)) {
+        // Check if already submitted (limit check to last 3 months if needed)
+        $already = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM $submission_table 
+                 WHERE JSON_EXTRACT(form_data, '$.email') = %s",
+                $email
+            )
+        );
+
+        if ($already > 0) {
+            echo '<p style="color:red;">' . esc_html($msg_duplicate) . '</p>';
+        } else {
+            // Insert into DB
+            $wpdb->insert($submission_table, [
+                'form_data'      => wp_json_encode($form_data),
+                'twiel_language' => $selected_lang,
+                'submitted_at'   => current_time('mysql'),
+            ]);
+
+            tsck_send_booking_email($form_data, $selected_lang);
+            echo '<p style="color: green;">' . esc_html($msg_success) . '</p>';
+        }
+    } else {
+        echo '<p style="color:red;">' . esc_html($msg_email_required) . '</p>';
+    }
 }
 
 // Fetch fields again for display
@@ -109,7 +142,11 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
                     default:
                     if($name === 'booking_date') {
                         echo "<input type='$type' id='event_date' name='$name' id='$name' placeholder='$placeholder'  class='form-control' $is_required>";
-                    }else{
+                    }else if($name === 'num_students') {
+                        echo "<input type='$type' name='$name' id='$name'  class='form-control' $is_required min='10' max='30'>";
+                    }
+                    
+                    else{
                         echo "<input type='$type' name='$name' id='$name' class='form-control' $is_required>";
                 }
                     break;
@@ -133,7 +170,7 @@ $fields = $wpdb->get_results("SELECT * FROM $table ORDER BY position ASC");
 <script>
 jQuery(function ($) {
 
-
+ var selectedLang = "<?php echo $selected_lang; ?>";
 const allowedDates = tsckBookingData.event_dates || [];
 const bookedDates = tsckBookingData.booked_dates || [];
 const ppDates = tsckBookingData.ppevent_date || [];
@@ -191,98 +228,6 @@ $('#event_date').datepicker({
 });
 
 
- const input = document.getElementById('phone');
-    const countryCode = '+966';
-
-    // Convert Arabic to English digits
-    function convertArabicToEnglish(input) {
-        return input.replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660);
-    }
-
-    // Ensure country code prefix
-    function enforceCountryCode() {
-        let val = convertArabicToEnglish(input.value);
-
-        // Strip all non-digit except +
-        val = val.replace(/[^\d+]/g, '');
-
-        // Ensure it starts with +966
-        if (!val.startsWith(countryCode)) {
-            val = countryCode + val.replace(/^(\+)?(966)?/, '');
-        }
-
-        input.value = val;
-    }
-
-    // Initial setup
-    input.addEventListener('focus', () => {
-        if (!input.value.startsWith(countryCode)) {
-            input.value = countryCode;
-        }
-    });
-
-    // Prevent deleting country code
-    input.addEventListener('keydown', (e) => {
-        const caretPos = input.selectionStart;
-        if (
-            (e.key === 'Backspace' || e.key === 'Delete') &&
-            caretPos <= countryCode.length
-        ) {
-            e.preventDefault();
-        }
-    });
-
-
-    (function () {
-    const input = document.getElementById('phone');
-    const countryCode = '+966';
-
-    // Convert Arabic numerals to Western digits
-    function convertArabicToEnglish(str) {
-        return str.replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660);
-    }
-
-    // Filter out everything except digits after +966
-    function enforcePhoneFormat() {
-        let val = convertArabicToEnglish(input.value);
-        if (!val.startsWith(countryCode)) {
-            val = countryCode + val.replace(/^\+?966/, '');
-        }
-
-        const numbersOnly = val.slice(countryCode.length).replace(/\D/g, '');
-        input.value = countryCode + numbersOnly;
-    }
-
-    // Prevent removing the country code
-    input.addEventListener('keydown', function (e) {
-        const caret = input.selectionStart;
-        if ((e.key === 'Backspace' || e.key === 'Delete') && caret <= countryCode.length) {
-            e.preventDefault();
-        }
-
-        // Disallow typing letters/symbols
-        if (
-            caret > countryCode.length &&
-            !/[0-9\u0660-\u0669]/.test(e.key) &&
-            e.key.length === 1 // skip keys like Arrow, Delete etc.
-        ) {
-            e.preventDefault();
-        }
-    });
-
-    // Ensure valid format after every change
-    input.addEventListener('input', enforcePhoneFormat);
-
-    // Initialize value correctly
-    input.addEventListener('focus', () => {
-        if (!input.value.startsWith(countryCode)) {
-            input.value = countryCode;
-        }
-    });
-
-    // Run once on load
-    enforcePhoneFormat();
-})();
 
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -356,35 +301,177 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+  const phoneInput = document.getElementById('phone');
+    const prefix = '+971';
+    const selectedLang = <?php echo json_encode($selected_lang); ?>;
 
- document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('tsck-dynamic-booking-form');
+     // Add event listener for keydown
+    phoneInput.addEventListener('keydown', function(e) {
+        // Check if the cursor is within the prefix region and prevent Backspace/Delete
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+            // Alert message based on the selected language
+             if (phoneInput.selectionStart <= prefix.length)  {
+            alert(selectedLang === 'ar'
+                ? 'لا يمكنك حذف رمز الدولة.'
+                : 'You cannot delete the country code prefix.'
+            );
+            e.preventDefault(); 
+        }
+             // Prevent default behavior of the keypress
+        }
+    });
 
-    form.addEventListener('submit', function (e) {
-        let valid = true;
+    // Ensure cursor stays after the prefix when user focuses on the input field
+    phoneInput.addEventListener('focus', function() {
+        // If the value is exactly +971, move the cursor after it
+        if (phoneInput.value === prefix) {
+            setTimeout(function() {
+                phoneInput.setSelectionRange(prefix.length, prefix.length);  // Place cursor after +971
+            }, 0);
+        }
+    });
 
-        // Remove old error borders
-        form.querySelectorAll('.error-field').forEach(el => el.classList.remove('error-field'));
+    // Set error message based on language
+    const msgInvalid = selectedLang === 'ar'
+        ? "رقم الهاتف يجب أن يتكون من 9 أرقام بعد كود الدولة"
+        : "Phone number must be 9 digits after the country code";
 
-        form.querySelectorAll('[required]').forEach(function (field) {
-            if (field.type === 'radio') {
-                // Check radio group
-                const group = form.querySelectorAll(`[name="${field.name}"]`);
-                if (![...group].some(r => r.checked)) {
-                    valid = false;
-                    group.forEach(r => r.classList.add('error-field'));
-                }
-            } else if (!field.value.trim()) {
-                valid = false;
-                field.classList.add('error-field');
+    if (phoneInput) {
+        // Always ensure prefix is present
+        phoneInput.addEventListener('focus', function () {
+            if (!phoneInput.value.startsWith(prefix)) {
+                phoneInput.value = prefix;
             }
         });
 
+        // Validate on blur
+        phoneInput.addEventListener('blur', function () {
+            let val = phoneInput.value.trim();
+
+            // Ensure prefix is present
+            if (!val.startsWith(prefix)) {
+                val = prefix + val.replace(/\D+/g, '');
+            }
+
+            let num = val.replace(/\D+/g, ''); // only digits
+            if (num.startsWith('971')) {
+                num = num.slice(3); // remove prefix for checking
+            }
+
+            removePhoneError();
+     
+            if (num.length != 9) {
+                  
+                phoneInput.classList.add('error-field');
+                showPhoneError(msgInvalid);
+            } else {
+                   alert(1);
+                phoneInput.classList.remove('error-field');
+                phoneInput.value = prefix + num; // store full number
+            }
+        });
+    }
+
+    function showPhoneError(msg) {
+        const error = document.createElement('div');
+        error.classList.add('field-error-message', 'phone-error');
+        error.style.color = 'red';
+        error.style.fontSize = '13px';
+        error.style.marginTop = '4px';
+        error.textContent = msg;
+        phoneInput.parentElement.appendChild(error);
+    }
+
+    function removePhoneError() {
+        const old = document.querySelector('.phone-error');
+        if (old) old.remove();
+    }
+});
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('tsck-dynamic-booking-form');
+    const phoneField = document.getElementById('phone');
+    const studentField = document.getElementById('num_students'); // change ID to match your input
+
+    form.addEventListener('submit', function (e) {
+        let valid = true;
+        let processedRadioGroups = new Set();
+
+        // Remove old error borders & messages
+        form.querySelectorAll('.error-field').forEach(el => el.classList.remove('error-field'));
+        form.querySelectorAll('.field-error-message').forEach(msg => msg.remove());
+
+        // Loop through required fields
+        form.querySelectorAll('[required]').forEach(function (field) {
+            let fieldValid = true;
+
+            if (field.type === 'radio') {
+                if (!processedRadioGroups.has(field.name)) {
+                    processedRadioGroups.add(field.name);
+
+                    const group = form.querySelectorAll(`[name="${field.name}"]`);
+                    if (![...group].some(r => r.checked)) {
+                        fieldValid = false;
+                        group.forEach(r => r.classList.add('error-field'));
+
+                        const groupWrapper = group[0].closest('div') || group[0].parentElement;
+                        addErrorMessage(groupWrapper, getErrorMessage(field), 'beforebegin');
+                    }
+                }
+            } else if (!field.value.trim()) {
+                fieldValid = false;
+                field.classList.add('error-field');
+                addErrorMessage(field, getErrorMessage(field), 'afterend');
+            }
+
+            if (!fieldValid) {
+                valid = false;
+            }
+        });
+
+        // Extra validation for number of students 10–30
+        if (studentField) {
+            const numStudents = parseInt(studentField.value.trim(), 10);
+            const selectedLang = "<?php echo esc_js($selected_lang); ?>";
+            if (isNaN(numStudents) || numStudents < 10 || numStudents > 30) {
+                valid = false;
+                studentField.classList.add('error-field');
+                addErrorMessage(
+                    studentField,
+                    selectedLang === 'ar'
+                        ? 'عدد الطلاب يجب أن يكون بين 10 و 30'
+                        : 'Number of students must be between 10 and 30',
+                    'afterend'
+                );
+            }
+        }
+
         if (!valid) {
-            e.preventDefault(); // Stop submission
+            e.preventDefault();
         }
     });
+
+    function addErrorMessage(element, message, position) {
+        const error = document.createElement('div');
+        error.classList.add('field-error-message');
+        error.textContent = message;
+        error.style.color = 'red';
+        error.style.fontSize = '13px';
+        error.style.marginTop = '4px';
+        element.insertAdjacentElement(position, error);
+    }
+
+    function getErrorMessage(field) {
+        const selectedLang = "<?php echo esc_js($selected_lang); ?>";
+        return field.dataset.error || (selectedLang === 'ar' ? 'هذا الحقل مطلوب' : 'This field is required');
+    }
 });
+
+
+
 
 </script>
 <style>
